@@ -6,19 +6,29 @@ import { nextStep, prevStep } from '../redux/formSlice';
 import { validationSchema } from './validationSchema';
 import StepOne from './StepOne';
 import StepTwo from './StepTwo';
-
 const FormContainer = () => {
   const dispatch = useDispatch();
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [isSubmitted, setIsSubmitted] = useState(false); 
+  
   const step = useSelector((state: RootState) => state.form.step);
   const userData = useSelector((state: RootState) => state.form.userData);
 
   const handleNext = async () => {
+  
+    if (step === 1) {
+      try {
+        await validationSchema.validate(userData, { abortEarly: false });
+        setIsSubmitted(true); 
+      } catch (err: any) {
+        const validationErrors: Record<string, string> = {};
+        err.inner.forEach((e: any) => validationErrors[e.path] = e.message);
+        setErrors(validationErrors);
+      }
+      return;
+    }
     try {
-      const stepSchema = step === 0 
-        ? validationSchema.pick(['firstName', 'email']) 
-        : validationSchema;
-
+      const stepSchema = validationSchema.pick(['firstName', 'email']);
       await stepSchema.validate(userData, { abortEarly: false });
       setErrors({});
       dispatch(nextStep());
@@ -28,6 +38,18 @@ const FormContainer = () => {
       setErrors(validationErrors);
     }
   };
+
+
+  if (isSubmitted) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
+        <div className="bg-white p-10 rounded-3xl shadow-xl text-center">
+          <h2 className="text-2xl font-black text-green-600">Form Submitted! ✅</h2>
+        
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
