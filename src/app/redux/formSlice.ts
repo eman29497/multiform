@@ -6,6 +6,7 @@ interface FormState{
         email:string;
         address:string;
         city:string;
+        [key: string]:string;
     };
 }
 const initialState: FormState={
@@ -22,8 +23,9 @@ const formSlice = createSlice({
     name:'form',
     initialState,
     reducers:{
-        updatedField: (state,action:PayloadAction<{field: keyof FormState['userData']; value:string}>)=>{
-            state.userData[action.payload.field] = action.payload.value;
+        updatedField: (state,action:PayloadAction<{field: string; value:string}>)=>{
+            const {field,value} = action.payload;
+            state.userData[field] = value;
         },
         nextStep:(state) =>{state.step += 1;},
         prevStep:(state) =>{state.step -= 1;},

@@ -11,84 +11,44 @@ const FormContainer = () => {
   const dispatch = useDispatch();
   const [errors, setErrors] = useState<Record<string, string>>({});
   const step = useSelector((state: RootState) => state.form.step);
-  const finalData = useSelector((state: RootState) => state.form.userData);
-
-  const handleSubmit = async () => {
-    try {
-      const response = await fetch('/api/submit', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(finalData),
-      });
-      
-      if (response.ok) {
-        console.log('Data successfully saved to MongoDB');
-        dispatch(nextStep()); // Submit hone ke baad success screen par jayein
-      } else {
-        console.error('Failed to save data');
-      }
-    } catch (error) {
-      console.error('Submission Error:', error);
-    }
-  };
+  const userData = useSelector((state: RootState) => state.form.userData);
 
   const handleNext = async () => {
     try {
-      // Step-wise validation
-      if (step === 0) {
-        await validationSchema.validateAt('firstName', finalData);
-        await validationSchema.validateAt('email', finalData);
-      } else if (step === 1) {
-        await validationSchema.validateAt('address', finalData);
-        await validationSchema.validateAt('city', finalData);
-      }
+      const stepSchema = step === 0 
+        ? validationSchema.pick(['firstName', 'email']) 
+        : validationSchema;
 
-      setErrors({}); // Agar sab sahi hai to errors clear karein
-
-      if (step === 1) {
-        handleSubmit(); 
-      } else {
-        dispatch(nextStep());
-      }
+      await stepSchema.validate(userData, { abortEarly: false });
+      setErrors({});
+      dispatch(nextStep());
     } catch (err: any) {
-      // Sirf current step ka error show karein
-      setErrors({ [err.path]: err.message });
+      const validationErrors: Record<string, string> = {};
+      err.inner.forEach((e: any) => validationErrors[e.path] = e.message);
+      setErrors(validationErrors);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100 p-4">
-      <div className="bg-white p-6 rounded-2xl shadow-xl w-full max-w-sm">
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
+      <div className="w-full max-w-sm bg-white p-8 rounded-3xl shadow-xl border border-gray-100">
+        {step === 0 ? <StepOne errors={errors} /> : <StepTwo errors={errors} />}
         
-        <div className="w-full mb-8 min-h-[200px]">
-          {step === 0 && <StepOne errors={errors} />}
-          {step === 1 && <StepTwo errors={errors} />}
-          
-          {step > 1 && (
-            <div className="text-center p-6">
-              <h2 className="text-2xl font-bold text-green-600">Form Submitted! ✅</h2>
-            </div>
-          )}
+        <div className="flex justify-between mt-8">
+          <button 
+            type="button"
+            onClick={() => dispatch(prevStep())} 
+            disabled={step === 0}
+            className="px-6 py-3 bg-gray-100 text-gray-600 rounded-xl text-sm font-bold hover:bg-gray-200 transition disabled:opacity-50"
+          >Back</button>
+          <button 
+            type="button"
+            onClick={handleNext} 
+            className="px-6 py-3 bg-blue-600 text-white rounded-xl text-sm font-bold hover:bg-blue-700 transition"
+          >
+            {step === 1 ? 'Submit' : 'Next'}
+          </button>
         </div>
-
-        {step < 2 && (
-          <div className="flex justify-between mt-8 w-64 mx-auto">
-            <button 
-              disabled={step === 0}
-              onClick={() => dispatch(prevStep())}
-              className="px-4 py-2 bg-gray-200 rounded-lg text-sm disabled:opacity-50"
-            >
-              Back
-            </button>
-            
-            <button 
-              onClick={handleNext}
-              className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm"
-            >
-              {step === 1 ? "Submit" : "Next"}
-            </button>
-          </div>
-        )}
       </div>
     </div>
   );

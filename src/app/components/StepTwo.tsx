@@ -3,44 +3,37 @@ import React from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { updatedField } from '../redux/formSlice';
 import { RootState } from '../redux/store';
-const StepTwo = ({ errors }: { errors: any }) => {
+const StepTwo = ({ errors }: { errors: Record<string, string> }) => {
   const dispatch = useDispatch();
   const { address, city } = useSelector((state: RootState) => state.form.userData);
-  const handleChange = (field: 'address' | 'city', value: string) => {
-    dispatch(updatedField({ field, value }));
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    dispatch(updatedField({ field: e.target.name, value: e.target.value }));
   };
   return (
-    <div className="flex flex-col items-center">
-      <div className="text-center mb-6">
-        <h2 className="text-lg font-bold text-gray-800">Address Details</h2>
+    <div className="space-y-6">
+      <h2 className="text-xl font-extrabold text-gray-800 text-center">Address Details</h2>
+  
+      <div className="space-y-1.5">
+        <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest">Address</label>
+        <input 
+          name="address" 
+          placeholder="Type Your Address..." 
+          value={address} 
+          onChange={handleChange}
+          className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition text-sm font-medium"
+        />
+        {errors.address && <p className="text-red-500 text-[10px] font-bold">{errors.address}</p>}
       </div>
-      <div className="w-64 space-y-4">
-        <div>
-          <label className="block mb-1 text-[11px] font-semibold text-gray-400 uppercase">Address</label>
-          <input
-            type="text"
-            value={address}
-            onChange={(e) => handleChange('address', e.target.value)}
-            placeholder="Type Your Address..."
-            className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:ring-1 focus:ring-indigo-500 outline-none"
-          />
-          {errors?.address && (
-            <p className="text-red-500 text-[10px] mt-1">{errors.address}</p>
-          )}
-        </div>
-        <div>
-          <label className="block mb-1 text-[11px] font-semibold text-gray-400 uppercase">City</label>
-          <input
-            type="text"
-            value={city}
-            onChange={(e) => handleChange('city', e.target.value)}
-            placeholder="Type City Here..."
-            className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:ring-1 focus:ring-indigo-500 outline-none"
-          />
-          {errors?.city && (
-            <p className="text-red-500 text-[10px] mt-1">{errors.city}</p>
-          )}
-        </div>
+      <div className="space-y-1.5">
+        <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest">City</label>
+        <input 
+          name="city" 
+          placeholder="Type City Here..." 
+          value={city} 
+          onChange={handleChange}
+          className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition text-sm font-medium"
+        />
+        {errors.city && <p className="text-red-500 text-[10px] font-bold">{errors.city}</p>}
       </div>
     </div>
   );
