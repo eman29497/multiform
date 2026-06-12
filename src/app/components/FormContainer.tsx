@@ -6,10 +6,11 @@ import { nextStep, prevStep } from '../redux/formSlice';
 import { validationSchema } from './validationSchema';
 import StepOne from './StepOne';
 import StepTwo from './StepTwo';
+
 const FormContainer = () => {
   const dispatch = useDispatch();
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const [isSubmitted, setIsSubmitted] = useState(false); 
+  const [isSubmitted, setIsSubmitted] = useState(false);
   
   const step = useSelector((state: RootState) => state.form.step);
   const userData = useSelector((state: RootState) => state.form.userData);
@@ -18,15 +19,33 @@ const FormContainer = () => {
   
     if (step === 1) {
       try {
+        
         await validationSchema.validate(userData, { abortEarly: false });
-        setIsSubmitted(true); 
+        setErrors({});
+
+
+        const response = await fetch('/api/submit', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(userData),
+        });
+
+        if (response.ok) {
+          setIsSubmitted(true); 
+        } else {
+          alert("Something went wrong, please try again.");
+        }
       } catch (err: any) {
         const validationErrors: Record<string, string> = {};
-        err.inner.forEach((e: any) => validationErrors[e.path] = e.message);
+        if (err.inner) {
+          err.inner.forEach((e: any) => validationErrors[e.path] = e.message);
+        }
         setErrors(validationErrors);
       }
       return;
     }
+
+    
     try {
       const stepSchema = validationSchema.pick(['firstName', 'email']);
       await stepSchema.validate(userData, { abortEarly: false });
@@ -34,23 +53,22 @@ const FormContainer = () => {
       dispatch(nextStep());
     } catch (err: any) {
       const validationErrors: Record<string, string> = {};
-      err.inner.forEach((e: any) => validationErrors[e.path] = e.message);
+      if (err.inner) {
+        err.inner.forEach((e: any) => validationErrors[e.path] = e.message);
+      }
       setErrors(validationErrors);
     }
   };
-
-
-  if (isSubmitted) {
+   if (isSubmitted) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
-        <div className="bg-white p-10 rounded-3xl shadow-xl text-center">
-          <h2 className="text-2xl font-black text-green-600">Form Submitted! ✅</h2>
-        
+        <div className="bg-white p-10 rounded-3xl shadow-xl text-center border border-gray-100 transform transition-all duration-500">
+    
+          <h2 className="text-3xl font-black text-green-600 mb-4">Form Submitted ✅</h2>
         </div>
       </div>
     );
-  }
-
+   }
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
       <div className="w-full max-w-sm bg-white p-8 rounded-3xl shadow-xl border border-gray-100">
